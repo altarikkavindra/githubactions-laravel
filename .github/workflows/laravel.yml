@@ -12,7 +12,8 @@ jobs:
     - name: checkout code
       uses: actions/checkout@v4
       
-    - uses: setup PHP
+    - name: setup PHP
+      uses: shivammathur/setup-php@v2
       with:
         php-version: '8.1'
         extensisons: mbstring, xml, bcmath, curl, mysql
