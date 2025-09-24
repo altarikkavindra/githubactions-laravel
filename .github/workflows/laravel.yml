@@ -12,9 +12,9 @@ jobs:
     - name: checkout code
       uses: actions/checkout@v4
       
-    - uses: actions/checkout@v4
+    - uses: setup PHP
       with:
-        php-version: '7.4'
+        php-version: '8.1'
         extensisons: mbstring, xml, bcmath, curl, mysql
       
     - name: Install Dependencies
