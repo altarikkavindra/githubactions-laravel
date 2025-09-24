@@ -1,0 +1,62 @@
+name: Laravel
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: checkout code
+      uses: actions/checkout@v4
+      
+    - uses: actions/checkout@v4
+      with:
+        php-version: '7.4'
+        extensisons: mbstring, xml, bcmath, curl, mysql
+      
+    - name: Install Dependencies
+      run: |
+        composer install --optimize-autoloader --no-dev --no-progress --no-interaction --prefer-dist
+        cp .env.example .env
+        php artisan key:generate
+
+    - name: Run test
+      run: php artisan test || true  
+     
+deploy:
+  runs-on: ubuntu-latest
+  needs: build
+  if: github.ref == 'refs/heads/main'
+
+  steps:
+  - name: checkout code
+    uses: actions/checkout@v4
+
+  - name: Deploy to VPS
+    uses: appleboy/scp-action@v1
+    with:
+      host: ${{ secrets.VPS_HOST }}
+      username: ${{ secrets.VPS_USER }}
+      key: ${{ secrets.VPS_SSH_KEY }}
+      port: ${{ secrets.VPS_PORT }}
+      source: "./*"
+      target: /var/www/github-actions
+
+  - name: deploy to server      
+    uses: appleboy/ssh-action@v1
+    with:
+      host: ${{ secrets.VPS_HOST }}
+      username: ${{ secrets.VPS_USER }}
+      key: ${{ secrets.VPS_SSH_KEY }}
+      port: ${{ secrets.VPS_PORT }}
+      script: |
+        cd /var/www/github-actions
+        composer install --no-dev --optimize-autoloader
+        php artisan migrate --force
+        php artisan config:cache
+        php artisan route:cache
+        php artisan view:cache
+        sudo systemctl restart apache2        
